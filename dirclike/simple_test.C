@@ -27,17 +27,16 @@ void simple_test()
     }
 
   int nph = ev->GetNPhotons();
-  
+  cout << "I have " << nph << " photons!" << endl;  
+
+  PIDPhoton* photons = (PIDPhoton*)ev->GetPhotons();
+  if( photons == NULL )
+    cout << "empty!" << endl;
+
   for(int i=0; i<3; i++)
     {
-      PIDPhoton* photons = (PIDPhoton*)ev->GetPhotons();
       cout << "you don't do anything" << endl;
-      if( photons == NULL )
-	cout << "empty!" << endl;
-      
-      cout << "you don't do anything" << endl;
-      cout << photons->x << endl;
+      cout << photons[i].x << endl;
     }
-
 
 }

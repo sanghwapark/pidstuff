@@ -26,10 +26,10 @@ const double pi     = 3.14159265;
 const double cm2m   = 1.e-2;          // cm to m
 
 // bar properties
-double fn         = 1.02;         // refractive index
-double fLength    = 20.;          // length of the bar, cm
+double fn         = 1.1;         // refractive index
+double fLength    = 10.;          // length of the bar, cm
 double fThickness = 2.;           // thickness of the bar, cm
-double fAngle     = -10.;          // tilt angle between normal vector and z in deg (+:clockwise rotation)
+double fAngle     = -9.;          // tilt angle between normal vector and z in deg (+:clockwise rotation)
 
 // photon detection
 double fCutoff    = 300;          // Lambda cutoff
@@ -46,85 +46,16 @@ string roname[3] = {"TOP", "BOTTOM", "NO SIGNAL"};
 double getdNdx(double p);
 double getIntegralQE(double cutoff);
 double getCerAngle(double p);
-void SetTree(TTree* tree);
-void InitVar();
 
-int verbosity = 1;
+int verbosity = 0;
 
-const int NMAX = 1000;
-int    EventNumber;
-int    o_pid;
-double o_p;
-double o_beta;
-double o_thetac;
-double o_dndx;
-int    nPhotons;
-double o_x[NMAX];
-double o_y[NMAX];
-double o_z[NMAX];
-double o_phi[NMAX];
-double o_angle[NMAX];
-double o_lPro[NMAX];
-double o_tPro[NMAX];
-double o_tGen[NMAX];
-double o_tTot[NMAX];
-double o_sensorID[NMAX];
-
-void InitVar()
+void Dirclike(double p, int pid, PIDEvent *event)
 {
-  EventNumber = -999;
-  o_pid    = -999;
-  o_p      = -999;
-  o_beta   = -999;
-  o_thetac = -999;
-  o_dndx   = -999;
-  nPhotons = -999;
-  for(int i=0; i<NMAX; i++)
-    {
-      o_x[i] = -999;
-      o_y[i] = -999;
-      o_z[i] = -999;
-      o_phi[i] = -999;
-      o_angle[i] = -999;
-      o_lPro[i] = -999;
-      o_tPro[i] = -999;
-      o_tGen[i] = -999;
-      o_tTot[i] = -999;
-      o_sensorID[i] = -999;
-    }
-}
 
-void SetTree(TTree* tree)
-{
-  tree->Branch("EventNumber", &EventNumber,"EventNumber/I");
-  tree->Branch("n",           &fn,         "n/D");
-  tree->Branch("length",      &fLength ,   "length/D");
-  tree->Branch("thickness",   &fThickness, "thickness/D");
-  tree->Branch("tilt_angle",  &fAngle,     "tilt_angle/D");
-  tree->Branch("sigmaT",      &sigmaT,     "sigmaT/D");
-
-  tree->Branch("pid",         &o_pid,        "pid/I");
-  tree->Branch("p",           &o_p,          "p/D");
-  tree->Branch("beta",        &o_beta,       "beta/D");
-  tree->Branch("thetac",      &o_thetac,     "thetac/D");
-  tree->Branch("dndx",        &o_dndx,       "dndx/D");
-
-  tree->Branch("nPhotons", &nPhotons , "nPhotons/I");
-  tree->Branch("x",        o_x,        "x[nPhotons]/D");
-  tree->Branch("y",        o_y,        "y[nPhotons]/D");
-  tree->Branch("z",        o_z,        "z[nPhotons]/D");
-  tree->Branch("phi",      o_phi,      "phi[nPhotons]/D");
-  tree->Branch("angle",    o_angle,    "angle[nPhotons]/D");
-  tree->Branch("lPro",     o_lPro,     "lPro[nPhotons]/D");
-  tree->Branch("tPro",     o_tPro,     "tPro[nPhotons]/D");
-  tree->Branch("tGen",     o_tGen,     "tGen[nPhotons]/D");
-  tree->Branch("tTot",     o_tTot,     "tTot[nPhotons]/D");
-  tree->Branch("sensorID", o_sensorID, "sensorID[nPhotons]/I");
-}
-
-
-void dirclike(double p=1, int pid=1)
-{
+  event->SetRadiator(fn, fLength, fThickness);
+  event->SetAngle(fAngle);
+  event->SetLambdaCutoff(fCutoff);
+  event->SetSigma(sigmaT);
 
   cout << endl;
   // Set particle mass
@@ -191,27 +122,19 @@ void dirclike(double p=1, int pid=1)
   cout << "Lpath = " << ltravel << endl;
   cout << endl;
 
-  // Output
-  TFile* fout = new TFile(Form("fout_p%.2f_pid%d.root", p, pid), "RECREATE");
-  TTree* T = new TTree("T","T");
-  SetTree(T);
-  InitVar();
-
-  o_beta = beta;
-  o_pid = pid;
-  o_p   = p;
-  o_thetac = thetac;
-  o_dndx   = dndx;
-  nPhotons = (int)npe;
+  event->SetCherenkovAngle(thetac);
+  event->SetMomentum(p);
+  event->SetMass(mass);
+  event->SetdNdx(dndx);
+  event->SetNpe(int(npe));
 
   int nsig[3] = {0};
-  vector<double> v_time;
 
   for(int ipe=0; ipe<(int)npe; ipe++)
     {
      
-      v_time.clear();
-
+     PIDPhoton iphoton;
+      
      // uniformly distributed along the particle path
      double dz = rand.Uniform(0,1) * ltravel;
      double phi = rand.Uniform(-pi, pi);
@@ -239,7 +162,6 @@ void dirclike(double p=1, int pid=1)
      double lpro  = -999;
      double ydist = -999;
      double tpro  = -999;
-     double tgen  = dz / (beta / c); //ps
 
      if( cos(angle) == 0 )
        {
@@ -262,28 +184,30 @@ void dirclike(double p=1, int pid=1)
 	 tpro = fn * lpro / c; //ps
        }
 
-     double ttot = tgen + tpro;
-
-     if(verbosity)
+     if( verbosity )
        {
-     cout << "------------- npe = " << ipe << " -------------" << endl;
-     cout << "Z: " << z << " tGen: " << tgen*.1e-3 << " ns" << endl;
-     cout << "Phi: " << phi*180./pi << " Angle: " << angle*180./pi << endl;
-     cout << "Readout: " << roname[readout] << endl;
-     cout << "dY: " << ydist << " Lprop: " << lpro << " cm Time:" << tpro*1.e-3 << " ns" << endl;
-     cout << "tTot: " << ttot*1.e-3 << " ns" << endl;
-     cout << endl;
+	 cout << "------------- npe = " << ipe << " -------------" << endl;
+	 cout << "Z: " << z << endl;
+	 cout << "Phi: " << phi*180./pi << " Angle: " << angle*180./pi << endl;
+	 cout << "Readout: " << roname[readout] << endl;
+	 cout << "dY: " << ydist << " Lprop: " << lpro << " cm Time:" << tpro*1.e-3 << " ns" << endl;
+	 cout << endl;
        }     
-
-     v_time.push_back(ttot);
 
      //take too long to detect
      if( tpro > 1.e18 ) readout = 2;
 
-
-
-
-
+     iphoton.x = x;
+     iphoton.y = y;
+     iphoton.z = z;
+     iphoton.Phi = phi;
+     iphoton.Angle = angle;
+     iphoton.lPro = lpro;
+     iphoton.tPro = tpro;
+     iphoton.tGen = ;
+     iphoton.tTot = ;
+     iphoton.SensorID = readout;
+     event->AddPhoton(iphoton);
 
      nsig[readout]++;
 
@@ -292,8 +216,6 @@ void dirclike(double p=1, int pid=1)
   cout << "End of process" << endl;
   cout << "#TOP: " << nsig[0] << " #BOTTOM: " << nsig[1] << " #NOSIGNAL: " << nsig[2] << endl;
   cout << endl;
-
-  return;
 }
 
 double getdNdx(double p)

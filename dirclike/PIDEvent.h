@@ -43,10 +43,12 @@ class PIDEvent
   void SetAngle(double a) { Angle = a; }
   void SetLambdaCutoff(double cutoff) { LambdaCutoff = cutoff; }
   void SetSigmaT(double dt) { SigmaT = dt; }
+  PIDEvent &operator=(const PIDEvent &right);
 
   double    CherenkovAngle;
   double    P;
   double    Mass;
+  double    Beta;
   double    dNdx;
   int       Npe;
   int       nPhotons;
@@ -56,6 +58,7 @@ class PIDEvent
   void SetCherenkovAngle(double value) { CherenkovAngle = value; }
   void SetMomentum(double value) { P = value; }
   void SetMass(double value) { Mass = value; }
+  void SetBeta(double value) { Beta = value; }
   void SetdNdx(double value) { dNdx = value; }
   void SetNpe(double value) { Npe = value; }
   void SetNPhotons(int value) { nPhotons = value; }

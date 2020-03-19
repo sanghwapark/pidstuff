@@ -29,19 +29,34 @@ void PIDEvent::AddPhoton(PIDPhoton &ph)
 PIDPhoton* PIDEvent::GetPhotons()
 {
 
-  if(nPhotons == 0)
+  if( nPhotons == 0 )
     return NULL;
 
-  PIDPhoton* phs;
-  phs = new PIDPhoton[nPhotons];
-
+  PIDPhoton* phs = new PIDPhoton[nPhotons];
   for(int iph=0; iph<nPhotons; iph++)
     {
-      phs[iph] = fPhotons[iph];
+      phs[iph].x = fPhotons[iph]->x;
+      phs[iph].y = fPhotons[iph]->y;
+      phs[iph].z = fPhotons[iph]->z;
+      phs[iph].Phi = fPhotons[iph]->Phi;
+      phs[iph].Angle = fPhotons[iph]->Angle;
+      phs[iph].lPro = fPhotons[iph]->lPro;
+      phs[iph].tPro = fPhotons[iph]->tPro;
+      phs[iph].tGen = fPhotons[iph]->tGen;
+      phs[iph].tTot = fPhotons[iph]->tTot;
+      phs[iph].SensorID = fPhotons[iph]->SensorID;
     }
 
-  return *phs;
+  return phs;
+
 }
+
+PIDEvent& PIDEvent::operator=(const PIDEvent &right)
+{
+  (*this) = right;
+  return *this;
+}
+
 
 PIDEvent::~PIDEvent()
 {
@@ -81,3 +96,4 @@ PIDPhoton& PIDPhoton::operator=(const PIDPhoton &right)
   (*this) = right;
   return *this;
 }
+
