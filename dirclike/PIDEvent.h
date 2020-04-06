@@ -3,28 +3,7 @@
 
 #include <vector>
 
-class PIDPhoton
-{
- public:
-  double x;
-  double y;
-  double z;
-  double Phi;
-  double Angle;
-  double lPro;
-  double tPro;
-  double tGen;
-  double tTot;
-  int SensorID;
-
- public:
-  PIDPhoton();
-  ~PIDPhoton() {}
-  PIDPhoton(const PIDPhoton& right);
-  PIDPhoton &operator=(const PIDPhoton &right);
-
-  ClassDef(PIDPhoton, 1);
-};
+#include "PIDPhoton.h"
 
 class PIDEvent
 {
@@ -53,7 +32,7 @@ class PIDEvent
   int       Npe;
   int       nPhotons;
 
-  vector<PIDPhoton*> fPhotons;
+  std::vector<PIDPhoton> fPhotons;
 
   void SetCherenkovAngle(double value) { CherenkovAngle = value; }
   void SetMomentum(double value) { P = value; }
@@ -61,12 +40,10 @@ class PIDEvent
   void SetBeta(double value) { Beta = value; }
   void SetdNdx(double value) { dNdx = value; }
   void SetNpe(double value) { Npe = value; }
-  void SetNPhotons(int value) { nPhotons = value; }
+  //  void SetNPhotons(int value) { nPhotons = value; }
   int GetNPhotons() { return nPhotons; }
   void AddPhoton(PIDPhoton &ph);
   PIDPhoton* GetPhotons();
-
-  ClassDef(PIDEvent, 1);
 
 };
 
